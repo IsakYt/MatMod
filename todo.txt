@@ -1,0 +1,16 @@
+1. Faktisk svare på oppgaven
+    Det er:
+        -Tid til signal
+        -Nødvendig antall transmittorer
+
+    Kan kreve:
+        -Forbedre implisitt kode
+        -Lokal konsentrasjon kontra gloabal
+        -Fikse scaling
+        -Sjekke massebevaring
+
+2. Skrive rapporten
+    Det medfører:
+        -Rettferdiggjøring av geometri
+        -Forklaring av initial og boundaryvalues
+        -Forklare tidsiterasjon
