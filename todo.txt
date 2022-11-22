@@ -14,3 +14,10 @@
         -Rettferdiggjøring av geometri
         -Forklaring av initial og boundaryvalues
         -Forklare tidsiterasjon
+
+
+3. Ny tilnærming
+    -Firkant
+    -Scale initialverdier
+    -Scale grid
+    -Scale reaksjonkoeffisienter og diffusjonskonstant
