@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from scipy.sparse import csr_matrix
 
 K = 8e-7
 dx = 0.1
@@ -13,7 +13,7 @@ r0 = 191
 n0 = 5000
 q0 = 0
 
-def build(M,N, banded = True):
+def build(M,N):
     """
     Builds a system matrix based on 2D central differences for an MxN grid, assumes dx = dy.
     input:
@@ -32,24 +32,68 @@ def build(M,N, banded = True):
     #print(boundary)
 
     #banded approach:
-    if banded:
-        diag = -4*np.ones(N*M, dtype = float)
-        offDiag = np.ones(N*M - 1, dtype = float)
-        superDiag = np.ones(N*M - M, dtype = float)
+    diag = -4*np.ones(N*M, dtype = float)
+    offDiag = np.ones(N*M - 1, dtype = float)
+    superDiag = np.ones(N*M - M, dtype = float)
+    system = [diag, offDiag, superDiag]
 
-        system = [diag, offDiag, superDiag]
+    return system, boundary
 
-        return system, boundary
 
-    else:
-        for i in range(M,M*N-M):
-            system[i,i] = -4
-            system[i,i-1] = 1
-            system[i,i+1] = 1
-            system[i,i+M] = 1
-            system[i,i-M] = 1    
-    
-        return system, boundary
+def fatCircle(N):
+    x = np.linspace(0,1,N+1)
+    y = np.linspace(0,1,N+1)
+    h = x[1] - x[0]
+    c = h*2**0.5
+    xv,yv = np.meshgrid(x,y)
+    index = []
+    nodes = []
+    ys = yv.flatten()
+
+    for i, point in enumerate(xv.flatten()):
+        index.append(i)
+        nodes.append((point,ys[i]))
+
+    #Circle interior
+    circNode = []
+    for j,p in enumerate(nodes):
+        if (p[0]-0.5)**2  + (p[1]-0.5)**2 < (0.5 + c)**2:
+            circNode.append(p)
+    circNode = np.array(circNode)
+   
+    return circNode
+
+def fatLap(N):
+    grid = fatCircle(N)
+    A = np.zeros((len(grid[:,0]),len(grid[:,0])))
+
+    data = []
+    row = []
+    col = []
+
+    h = 1/N
+    h2 = h*h
+    for i,P in enumerate(grid):
+        if (P[0]-0.5)**2 + (P[1]-0.5)**2 >= 0.25:
+            A[i,i] = 1
+
+        else:
+            Px = P[0]
+            Py = P[1]
+            
+            So = np.where(np.all(np.isclose([Px,Py-h],grid),axis=1))[0][0]
+            Ea = np.where(np.all(np.isclose([Px+h,Py],grid),axis=1))[0][0]
+            No = np.where(np.all(np.isclose([Px,Py+h],grid),axis=1))[0][0]
+            We = np.where(np.all(np.isclose([Px-h,Py],grid),axis=1))[0][0]
+            
+            A[i][i] = -4
+            A[i][So] = 1
+            A[i][Ea] = 1
+            A[i][No] = 1
+            A[i][We] = 1
+         
+    A = csr_matrix(A/h2)
+    return A
 
 #if __name__ == "__main__":
     # A = build(10,10)[0]
