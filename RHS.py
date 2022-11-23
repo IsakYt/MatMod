@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.sparse import csr_matrix
+import scipy.sparse as sp
 
 K = 8e-7
 dx = 0.1
@@ -13,6 +13,7 @@ r0 = 191
 n0 = 5000
 q0 = 0
 
+#No longer in use, as we are not on a square grid.
 def build(M,N):
     """
     Builds a system matrix based on 2D central differences for an MxN grid, assumes dx = dy.
@@ -40,18 +41,26 @@ def build(M,N):
     return system, boundary
 
 
-def fatCircle(N):
+def fatCircle(N, epsilon = 1.2):
+    """
+    generates the grid for a circle with a fattened boundary
+
+    input:
+        N: int, number of grid points across diagonal
+        epsilon: float, fattening parameter, between 1 and root(2)
+
+    return:
+        circNode: arr, list of all points on the fattened circle
+    """
     x = np.linspace(0,1,N+1)
     y = np.linspace(0,1,N+1)
     h = x[1] - x[0]
-    c = h*2**0.5
+    c = h*epsilon
     xv,yv = np.meshgrid(x,y)
-    index = []
     nodes = []
     ys = yv.flatten()
 
     for i, point in enumerate(xv.flatten()):
-        index.append(i)
         nodes.append((point,ys[i]))
 
     #Circle interior
@@ -64,8 +73,15 @@ def fatCircle(N):
     return circNode
 
 def fatLap(N):
+    """
+    Generates the sparse laplacian matrix for a fattened circle grid
+    input:
+        N: int, number of grid points across diagonal
+    return:
+        A: csr_matrix, the above mentioned matrix.
+    """
     grid = fatCircle(N)
-    A = np.zeros((len(grid[:,0]),len(grid[:,0])))
+    #A = np.zeros((len(grid[:,0]),len(grid[:,0])))
 
     data = []
     row = []
@@ -75,7 +91,10 @@ def fatLap(N):
     h2 = h*h
     for i,P in enumerate(grid):
         if (P[0]-0.5)**2 + (P[1]-0.5)**2 >= 0.25:
-            A[i,i] = 1
+            data.append(1)
+            row.append(i)
+            col.append(i)
+            #A[i,i] = 1
 
         else:
             Px = P[0]
@@ -86,13 +105,28 @@ def fatLap(N):
             No = np.where(np.all(np.isclose([Px,Py+h],grid),axis=1))[0][0]
             We = np.where(np.all(np.isclose([Px-h,Py],grid),axis=1))[0][0]
             
-            A[i][i] = -4
-            A[i][So] = 1
-            A[i][Ea] = 1
-            A[i][No] = 1
-            A[i][We] = 1
-         
-    A = csr_matrix(A/h2)
+            data.append(-4)
+            row.append(i)
+            col.append(i)
+
+            data.append(1)
+            row.append(i)
+            col.append(So)
+
+            data.append(1)
+            row.append(i)
+            col.append(Ea)
+
+            data.append(1)
+            row.append(i)
+            col.append(No)
+
+            data.append(1)
+            row.append(i)
+            col.append(We)
+    
+    A = sp.coo_matrix((data,(row,col)))
+    A = sp.csr_matrix(A/h2)
     return A
 
 #if __name__ == "__main__":
