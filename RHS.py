@@ -12,7 +12,7 @@ koff = 5
 r0 = 191
 n0 = 5000
 q0 = 0
-
+#comment
 #No longer in use, as we are not on a square grid.
 def build(M,N):
     """

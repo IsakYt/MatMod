@@ -67,7 +67,7 @@ def solver(N,r0, n0, steps, DX, dt, fat = True):
 
     return r,n
 
-
+#comment
 def Initial(P, x = 1, y = 0, r = 0.1):
     """
     Makes a disc of value 1
